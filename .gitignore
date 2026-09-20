@@ -1,0 +1,19 @@
+# 敏感信息
+.env
+*.pem
+*.key
+id_rsa*
+id_ed25519*
+
+# 备份和日志（体积大且含数据）
+backups/
+logs/
+*.log
+*.sql
+*.sql.gz
+*.tar.gz
+
+# 系统文件
+.DS_Store
+*.swp
+*~
