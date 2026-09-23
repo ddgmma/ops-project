@@ -1,0 +1,76 @@
+# ============================================================
+# Alertmanager 配置
+# ⚠️ 本文件含邮箱授权码，已在 .gitignore 中排除，不要提交到仓库
+# ============================================================
+
+global:
+  # 如果一条告警 5 分钟没有被更新，就认为它已恢复
+  resolve_timeout: 5m
+
+  # ---------- 邮件服务器 ----------
+  smtp_smarthost: 'smtp.qq.com:465'
+  smtp_from: '<你的QQ邮箱>@qq.com'
+  smtp_auth_username: '<你的QQ邮箱>@qq.com'
+  smtp_auth_password: '<你的QQ邮箱授权码>'
+  smtp_require_tls: true
+
+# ---------- 告警路由 ----------
+route:
+  # 默认接收者
+  receiver: 'email-me'
+
+  # 分组：同一类告警、同一个实例的告警合并成一封邮件
+  # 否则磁盘一满，你可能一次收到 20 封邮件
+  group_by: ['alertname', 'instance']
+
+  # 新告警组等 30 秒再发（攒一攒，避免连环告警刷屏）
+  group_wait: 30s
+  # 同一组的告警，5 分钟后才允许再发一次更新
+  group_interval: 5m
+  # 同一告警若一直没恢复，每 4 小时提醒一次（避免 5 分钟一封把你淹没）
+  repeat_interval: 4h
+
+  routes:
+    # 严重级别的告警不受分组等待限制，尽快发出
+    - matchers:
+        - severity = "critical"
+      receiver: 'email-me'
+      group_wait: 10s
+      repeat_interval: 2h
+
+# ---------- 抑制规则 ----------
+inhibit_rules:
+  # 如果主机已经"磁盘要写满"，就不用再重复发"磁盘使用率超过 80%"了
+  - source_matchers:
+      - alertname = "HostDiskWillFillSoon"
+    target_matchers:
+      - alertname = "HostLowDiskSpace"
+    equal: ['instance']
+
+  # 站点已经"完全不可访问"时，不必再发"响应缓慢"
+  - source_matchers:
+      - alertname = "SiteDown"
+    target_matchers:
+      - alertname = "SiteSlow"
+    equal: ['instance']
+
+receivers:
+  - name: 'email-me'
+    email_configs:
+      - to: '<你的QQ邮箱>@qq.com'
+        send_resolved: true          # 恢复时也发一封（"已恢复"邮件同样重要）
+        headers:
+          Subject: '[{{ .Status | toUpper }}] {{ .CommonLabels.alertname }} ({{ .Alerts | len }} 条)'
+        html: |
+          {{ range .Alerts }}
+          <h3>{{ .Annotations.summary }}</h3>
+          <p>{{ .Annotations.description }}</p>
+          <table border="1" cellpadding="4" cellspacing="0">
+            <tr><td>告警名称</td><td>{{ .Labels.alertname }}</td></tr>
+            <tr><td>级别</td><td>{{ .Labels.severity }}</td></tr>
+            <tr><td>对象</td><td>{{ .Labels.instance }}</td></tr>
+            <tr><td>状态</td><td>{{ .Status }}</td></tr>
+            <tr><td>开始时间</td><td>{{ .StartsAt.Format "2006-01-02 15:04:05" }}</td></tr>
+          </table>
+          <hr/>
+          {{ end }}

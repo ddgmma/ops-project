@@ -1,0 +1,62 @@
+# ============================================================
+# Prometheus 主配置
+# ============================================================
+
+global:
+  # 多久抓一次指标。15 秒是业界常见的平衡点：
+  # 更频繁（如 5s）数据更细但磁盘涨得快；更稀疏（如 60s）可能漏掉瞬时尖峰
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  # 这些标签会附加到本实例发出的所有数据上，多实例时用来区分数据来源
+  external_labels:
+    monitor: ops-project
+    host: tencent-lighthouse-01
+
+# 告警规则文件（下面 3.4 节创建）
+rule_files:
+  - /etc/prometheus/rules/*.yml
+
+# 告警发给谁处理
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets: ['alertmanager:9093']
+
+scrape_configs:
+  # ---------- 监控 Prometheus 自己 ----------
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  # ---------- 主机指标 ----------
+  - job_name: 'node'
+    static_configs:
+      - targets: ['node-exporter:9100']
+
+  # ---------- 容器指标 ----------
+  - job_name: 'cadvisor'
+    static_configs:
+      - targets: ['cadvisor:8080']
+
+  # ---------- 站点可用性拨测 ----------
+  # 注意这里的写法和上面不一样：Prometheus 不直接抓 blackbox-exporter 的指标，
+  # 而是"每次抓取时把要探测的 URL 作为参数传给 blackbox-exporter"，
+  # 由 blackbox-exporter 去访问这个 URL，再把结果作为指标返回。
+  - job_name: 'blackbox-http'
+    metrics_path: /probe
+    params:
+      module: [http_2xx]          # 期望返回 2xx 状态码
+    static_configs:
+      - targets:
+          - https://blog.ddgmm.top
+          - https://blog.ddgmm.top/wp-login.php
+    relabel_configs:
+      # 把 target（URL）转成传给 blackbox 的参数
+      - source_labels: [__address__]
+        target_label: __param_target
+      # 把 URL 记录成 instance 标签，方便在图上区分
+      - source_labels: [__param_target]
+        target_label: instance
+      # 实际去抓的地址改成 blackbox-exporter
+      - target_label: __address__
+        replacement: blackbox-exporter:9115

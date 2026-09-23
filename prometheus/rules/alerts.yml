@@ -1,0 +1,163 @@
+# ============================================================
+# 告警规则
+#
+# 每条规则的三个关键字段：
+#   expr  判断表达式（返回 true 就开始计时）
+#   for   持续多久才发告警（过滤瞬时抖动，非常重要！）
+#   severity 严重等级
+# ============================================================
+
+groups:
+  # ==================== 主机层 ====================
+  - name: host.rules
+    rules:
+      - alert: HostHighCpuLoad
+        expr: 100 - (avg by (instance) (rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 85
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "CPU 使用率过高（{{ $value | printf \"%.1f\" }}%）"
+          description: "主机 {{ $labels.instance }} 的 CPU 使用率已持续 5 分钟超过 85%，请检查是否有异常进程或容器。"
+
+      - alert: HostHighMemoryUsage
+        expr: (1 - node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes) * 100 > 85
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "内存使用率过高（{{ $value | printf \"%.1f\" }}%）"
+          description: "主机 {{ $labels.instance }} 内存吃紧，可能是容器内存泄漏或需要加 swap。"
+
+      - alert: HostLowDiskSpace
+        # 排除 tmpfs/overlay 这类虚拟文件系统，否则会误报
+        expr: |
+          (1 - node_filesystem_avail_bytes{fstype!~"tmpfs|overlay|squashfs|ramfs"}
+               / node_filesystem_size_bytes{fstype!~"tmpfs|overlay|squashfs|ramfs"}) * 100 > 80
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "磁盘使用率超过 80%（{{ $value | printf \"%.1f\" }}%）"
+          description: "挂载点 {{ $labels.mountpoint }} 空间不足 20%，Docker 日志或数据库增长是常见原因。"
+
+      - alert: HostDiskWillFillSoon
+        # 用线性预测：按最近的写入速度，4 小时内会写满 → 提前预警
+        expr: |
+          predict_linear(node_filesystem_avail_bytes{fstype!~"tmpfs|overlay|squashfs|ramfs"}[1h], 4 * 3600) < 0
+        for: 10m
+        labels:
+          severity: critical
+        annotations:
+          summary: "磁盘预计 4 小时内写满"
+          description: "挂载点 {{ $labels.mountpoint }} 按当前写入速度即将耗尽，请立即处理。"
+
+      - alert: HostOutOfMemory
+        expr: node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes * 100 < 10
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "可用内存不足 10%"
+          description: "主机 {{ $labels.instance }} 可用内存极低，随时可能触发 OOM Killer 杀掉容器。"
+
+      - alert: HostHighLoad
+        # 15 分钟平均负载超过 CPU 核数（4 核）的 2 倍
+        expr: node_load15 > (count(node_cpu_seconds_total{mode="idle"}) / 4) * 2
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "系统负载过高（{{ $value | printf \"%.2f\" }}）"
+          description: "15 分钟平均负载远超 CPU 核数，说明有大量进程在排队等待。"
+
+  # ==================== 采集层 ====================
+  - name: scrape.rules
+    rules:
+      - alert: TargetDown
+        # up 是 Prometheus 自己产生的指标：1=抓取成功，0=抓取失败
+        # 抓不到数据本身就是最基础的告警——可能是服务挂了，也可能是目标配错了
+        expr: up == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "抓取目标不可达：{{ $labels.job }}"
+          description: "目标 {{ $labels.instance }}（job={{ $labels.job }}）已连续 2 分钟抓取失败。"
+
+  # ==================== 容器层 ====================
+  - name: container.rules
+    rules:
+      - alert: ContainerMissing
+        # 期望这 3 个业务容器都在被 cAdvisor 采集；少于 3 个说明有容器停了
+        expr: count(container_last_seen{name=~"wp_app|wp_db|wp_nginx"}) < 3
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "业务容器数量异常"
+          description: "检测到的业务容器少于 3 个，可能有容器已停止运行。用 docker compose ps 确认。"
+
+      - alert: ContainerHighMemory
+        # 注意：只有设置了 mem_limit 的容器才有 container_spec_memory_limit_bytes
+        expr: |
+          (container_memory_working_set_bytes{name=~"wp_app|wp_db|wp_nginx"}
+           / container_spec_memory_limit_bytes{name=~"wp_app|wp_db|wp_nginx"} > 0.85)
+          and (container_spec_memory_limit_bytes{name=~"wp_app|wp_db|wp_nginx"} > 0)
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "容器 {{ $labels.name }} 内存接近上限"
+          description: "容器内存已用到限额的 85%，接近时会被 OOM Killer 杀掉并重启（restart 策略会让它反复重启）。"
+
+      - alert: ContainerRestarted
+        # restart 计数在 10 分钟内增加，说明容器崩溃后被自动重启过
+        expr: increase(container_start_time_seconds{name=~"wp_app|wp_db|wp_nginx"}[10m]) > 0
+        for: 0m
+        labels:
+          severity: warning
+        annotations:
+          summary: "容器 {{ $labels.name }} 发生过重启"
+          description: "容器在最近 10 分钟内重启过。虽然 restart 策略让它自动恢复了，但需要查清崩溃原因。"
+
+  # ==================== 业务层（最重要）====================
+  - name: business.rules
+    rules:
+      - alert: SiteDown
+        expr: probe_success{job="blackbox-http"} == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "站点无法访问：{{ $labels.instance }}"
+          description: "用户在浏览器里打不开这个地址，但主机和容器可能一切正常——先确认是应用层、证书还是网络的问题。"
+
+      - alert: SiteSlow
+        expr: probe_duration_seconds{job="blackbox-http"} > 5
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "站点响应缓慢（{{ $value | printf \"%.2f\" }} 秒）"
+          description: "页面响应时间持续超过 5 秒，用户体验很差，检查数据库慢查询或服务器负载。"
+
+      - alert: SSLCertExpiringSoon
+        # 证书剩余有效期不足 14 天。（证书 90 天有效，正常会自动续期；
+        # 这条告警是为了抓"自动续期失败"的情况——那也是第 6 章的一个演练）
+        expr: (probe_ssl_earliest_cert_expiry - time()) / 86400 < 14
+        for: 1h
+        labels:
+          severity: critical
+        annotations:
+          summary: "HTTPS 证书 {{ $value | printf \"%.0f\" }} 天后过期"
+          description: "证书即将过期且可能自动续期失败了，检查 certbot renew 的日志。"
+
+      - alert: SSLCertExpired
+        expr: probe_ssl_earliest_cert_expiry - time() < 0
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "HTTPS 证书已过期"
+          description: "证书已过期，用户会看到安全警告。立即手动执行 certbot renew --force-renewal。"

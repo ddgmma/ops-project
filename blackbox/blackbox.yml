@@ -1,0 +1,28 @@
+modules:
+  # HTTP 探测：2xx/3xx 算成功
+  http_2xx:
+    prober: http
+    timeout: 10s
+    http:
+      valid_http_versions: ["HTTP/1.1", "HTTP/2.0"]
+      valid_status_codes: []       # 留空表示 2xx 都算成功
+      method: GET
+      preferred_ip_protocol: "ip4"
+      # 跟随跳转（我们的站点会 301 到 https，不跟随就会被判成失败）
+      follow_redirects: true
+
+  # HTTPS + 证书检查：会额外产出 probe_ssl_earliest_cert_expiry 指标
+  https_cert:
+    prober: http
+    timeout: 10s
+    http:
+      valid_status_codes: []
+      method: GET
+      follow_redirects: true
+      tls_config:
+        insecure_skip_verify: false
+
+  # ICMP ping（可选，服务器需要额外权限）
+  icmp:
+    prober: icmp
+    timeout: 5s

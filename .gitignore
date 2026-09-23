@@ -17,3 +17,9 @@ logs/
 .DS_Store
 *.swp
 *~
+
+# 邮件告警
+alertmanager/alertmanager.yml
+
+# monitor.ddgmm.top 访问密码
+nginx/.htpasswd
