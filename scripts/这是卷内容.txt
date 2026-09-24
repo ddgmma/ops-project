@@ -1,0 +1,68 @@
+=== /data 顶层 ===
+total 272
+drwxr-xr-x    5 33       33            4096 Sep 22 14:45 .
+drwxr-xr-x    1 root     root          4096 Sep 23 11:45 ..
+-rw-r--r--    1 33       33             261 May 20 00:21 .htaccess
+-rw-r--r--    1 33       33             405 Feb  6  2020 index.php
+-rw-r--r--    1 33       33           19903 Sep 20 13:45 license.txt
+-rw-r--r--    1 33       33            7407 Sep 22 14:45 readme.html
+-rw-r--r--    1 33       33            7718 Sep 20 13:45 wp-activate.php
+drwxr-xr-x    9 33       33            4096 Sep 20 13:45 wp-admin
+-rw-r--r--    1 33       33             351 Feb  6  2020 wp-blog-header.php
+-rw-r--r--    1 33       33            2323 Jun 14  2023 wp-comments-post.php
+-rw-r--r--    1 33       33            5818 May 20 00:19 wp-config-docker.php
+-rw-r--r--    1 33       33            3339 Aug 12  2025 wp-config-sample.php
+-rw-r--r--    1 33       33            5922 Sep 20 08:00 wp-config.php
+drwxr-xr-x    8 33       33            4096 Sep 22 14:45 wp-content
+-rw-r--r--    1 33       33            5617 Aug  2  2024 wp-cron.php
+drwxr-xr-x   34 33       33           20480 Sep 20 13:45 wp-includes
+-rw-r--r--    1 33       33            2493 Apr 30  2025 wp-links-opml.php
+-rw-r--r--    1 33       33            3937 Mar 11  2024 wp-load.php
+-rw-r--r--    1 33       33           52536 Sep 20 13:45 wp-login.php
+-rw-r--r--    1 33       33            8727 Apr  2  2025 wp-mail.php
+-rw-r--r--    1 33       33           33152 Sep 20 13:45 wp-settings.php
+-rw-r--r--    1 33       33           35081 Sep 20 13:45 wp-signup.php
+-rw-r--r--    1 33       33            5396 Sep 20 13:45 wp-trackback.php
+-rw-r--r--    1 33       33            3205 Nov  8  2024 xmlrpc.php
+
+=== 两层目录 ===
+/data
+/data/wp-blog-header.php
+/data/wp-config-docker.php
+/data/wp-includes
+/data/wp-includes/theme.php
+/data/wp-includes/ms-network.php
+/data/wp-includes/embed.php
+/data/wp-includes/class-avif-info.php
+/data/wp-includes/feed-rss2-comments.php
+/data/wp-includes/class-wp-theme-json-schema.php
+/data/wp-includes/class-wp-http-proxy.php
+/data/wp-includes/block-bindings
+/data/wp-includes/class-wp-block-metadata-registry.php
+/data/wp-includes/fonts.php
+/data/wp-includes/class-wp-customize-manager.php
+/data/wp-includes/class-wp-navigation-fallback.php
+/data/wp-includes/wp-db.php
+/data/wp-includes/class-wp-paused-extensions-storage.php
+/data/wp-includes/class-wp-meta-query.php
+/data/wp-includes/certificates
+/data/wp-includes/ms-blogs.php
+/data/wp-includes/widgets
+/data/wp-includes/js
+/data/wp-includes/bookmark-template.php
+/data/wp-includes/plugin.php
+/data/wp-includes/block-patterns
+/data/wp-includes/class-wp-user-query.php
+/data/wp-includes/shortcodes.php
+/data/wp-includes/class-wp-recovery-mode-link-service.php
+/data/wp-includes/sitemaps
+/data/wp-includes/IXR
+/data/wp-includes/category-template.php
+/data/wp-includes/class-wp-customize-section.php
+/data/wp-includes/capabilities.php
+/data/wp-includes/pluggable.php
+/data/wp-includes/ID3
+/data/wp-includes/class-wp-recovery-mode.php
+/data/wp-includes/theme-i18n.json
+/data/wp-includes/class-wp-theme-json-data.php
+/data/wp-includes/class-wp-http-ixr-client.php

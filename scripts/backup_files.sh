@@ -94,7 +94,7 @@ if [ "$FILE_SIZE" -lt "$MIN_FILE_SIZE" ]; then
 fi
 
 # 确认包里真的有关键文件（而不是打了一个空目录）
-if ! tar tzf "$BACKUP_FILE" | grep -q 'wp-content'; then
+if ! tar tzf "$BACKUP_FILE" | grep 'wp-content' > /dev/null; then
     rm -f "$BACKUP_FILE"
     die "备份内容异常：包内找不到 wp-content 目录"
 fi
