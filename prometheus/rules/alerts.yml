@@ -161,3 +161,35 @@ groups:
         annotations:
           summary: "HTTPS 证书已过期"
           description: "证书已过期，用户会看到安全警告。立即手动执行 certbot renew --force-renewal。"
+
+  # ==================== 备份任务 ====================
+  - name: backup.rules
+    rules:
+      - alert: BackupFailed
+        expr: backup_success == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "备份任务失败：{{ $labels.type }}"
+          description: "备份脚本报错了。这是最高优先级的告警——备份悄悄失败，等你要用的时候才发现就晚了。"
+
+      - alert: BackupNotRunRecently
+        # 26 小时没成功执行过（每天一次 + 2 小时容错）
+        expr: (time() - backup_last_run_timestamp) > 26 * 3600
+        for: 10m
+        labels:
+          severity: critical
+        annotations:
+          summary: "备份任务超过 26 小时未执行：{{ $labels.type }}"
+          description: "cron 可能没在跑、脚本被删了、或者机器时间不对。检查 crontab -l 和 cron 服务状态。"
+
+      - alert: BackupMetricsMissing
+        # 指标本身不存在（比如 node-exporter 挂了、指标文件被删）
+        expr: absent(backup_last_run_timestamp)
+        for: 30m
+        labels:
+          severity: warning
+        annotations:
+          summary: "监控不到备份状态"
+          description: "备份指标不存在，说明 textfile 采集链路断了——此时你对备份状态是'盲'的。"

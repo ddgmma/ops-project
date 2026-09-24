@@ -129,11 +129,15 @@ services:
       - --path.rootfs=/rootfs
       # 排除掉容器自己的 overlay、tmpfs 等文件系统，否则磁盘用量会看起来很奇怪
       - --collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc|var/lib/docker/.+)($$|/)
+            # ★ 新增：读取自定义指标目录
+      - --collector.textfile.directory=/var/lib/node_exporter/textfile
     volumes:
       # 宿主机的 /proc、/sys、/ 以只读方式挂进来，node-exporter 靠读这些文件获取主机信息
       - /proc:/host/proc:ro
       - /sys:/host/sys:ro
       - /:/rootfs:ro
+            # ★ 新增：把备份脚本写的指标目录挂进来
+      - /var/lib/node_exporter/textfile:/var/lib/node_exporter/textfile:ro
     networks:
       - ops-net
     mem_limit: 128m
