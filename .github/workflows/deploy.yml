@@ -1,0 +1,50 @@
+name: Deploy to Production
+
+# 什么时候触发
+on:
+  push:
+    branches: [main]
+    # 下面这些文件变化不需要部署（节省 Actions 额度和时间）
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+      - '.gitignore'
+      - 'LICENSE'
+  # 支持在 GitHub 网页上手动点一下触发（回滚/重跑时很有用）
+  workflow_dispatch:
+
+# 同一时间只允许一个部署在跑
+concurrency:
+  group: production-deploy
+  # 不要取消正在进行的部署 —— 一个执行到一半的部署被打断可能留下半启动的状态
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: 部署到腾讯云服务器
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 拉取代码
+        uses: actions/checkout@v4
+
+      - name: 通过 SSH 执行部署
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_KEY }}
+          port: ${{ secrets.SSH_PORT }}
+          # ★ 校验服务器指纹，防止中间人攻击
+          fingerprint: ${{ secrets.SSH_FINGERPRINT }}
+          # 脚本里任一命令失败就中断（不静默继续）
+          script_stop: true
+          # 部署 + 健康检查最长可能 2 分钟，加备份时间，给足 10 分钟
+          command_timeout: 10m
+          script: |
+            echo "=== 部署开始 ==="
+            echo "触发人: ${{ github.actor }}"
+            echo "提交: ${{ github.sha }}"
+            echo "提交信息: ${{ github.event.head_commit.message }}"
+            echo ""
+            /bin/bash /home/ddgmms/ops-project/scripts/deploy.sh
