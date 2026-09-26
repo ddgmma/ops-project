@@ -93,7 +93,7 @@ for cmd in docker gzip; do
 done
 
 # ---------- 3. 检查容器在跑 ----------
-if ! docker inspect -f '{{.State.Running}}' "$CONTAINER_NAME" 2>/dev/null | grep -q '^true$'; then
+if ! docker inspect -f '{{.State.Running}}' "$CONTAINER_NAME" 2>/dev/null | grep '^true$' > /dev/null; then
     die "容器 $CONTAINER_NAME 未运行，无法备份"
 fi
 
@@ -154,7 +154,7 @@ fi
 # 5.3 SQL 内容是否正常结束
 #     mysqldump 正常完成时，末尾会输出 "-- Dump completed on ..."
 #     如果导出中途被中断（磁盘满、被杀进程），这个标记就不会出现
-if ! gunzip -c "$TMP_FILE" | tail -20 | grep -q 'Dump completed'; then
+if ! gunzip -c "$TMP_FILE" | tail -20 | grep 'Dump completed' > /dev/null; then
     rm -f "$TMP_FILE"
     die "备份文件不完整：缺少 'Dump completed' 结束标记，可能被中途截断"
 fi

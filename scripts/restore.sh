@@ -64,7 +64,7 @@ case "$MODE" in
 
     # 校验备份文件完整性（不能拿一个坏文件去覆盖现有数据！）
     gzip -t "$BACKUP_FILE" || die "备份文件已损坏，拒绝恢复"
-    gunzip -c "$BACKUP_FILE" | tail -20 | grep -q 'Dump completed' \
+    gunzip -c "$BACKUP_FILE" | tail -20 | grep 'Dump completed' > /dev/null \
         || die "备份文件不完整（缺少结束标记），拒绝恢复"
 
     # 2. 停掉应用，避免恢复过程中还有写入，导致数据不一致
@@ -92,7 +92,8 @@ case "$MODE" in
     log "===== 开始恢复文件卷：$BACKUP_FILE ====="
 
     tar tzf "$BACKUP_FILE" >/dev/null 2>&1 || die "备份文件已损坏，拒绝恢复"
-    tar tzf "$BACKUP_FILE" | grep -q 'wp-content' || die "备份内容异常，拒绝恢复"
+    # tar tzf 要输出几千行，grep -q 一匹配就退出 → tar 收到 SIGPIPE(141) → 管道非 0 → 误报"内容异常"
+    tar tzf "$BACKUP_FILE" | grep 'wp-content' > /dev/null || die "备份内容异常，拒绝恢复"d
 
     log "停止 WordPress 容器"
     docker stop "$WP_CONTAINER" >/dev/null
@@ -129,10 +130,11 @@ esac
 sleep 5
 log "===== 恢复后的验证 ====="
 
-if curl -sf -o /dev/null -w "%{http_code}\n" https://blog.ddgmm.top -k | grep -qE '200|302'; then
+if curl -sf -o /dev/null -w "%{http_code}\n" https://blog.ddgmm.top -k | grep -E '200|302' > /dev/null; then
     log "网站可访问 ✅"
 else
     log "⚠️ 网站访问异常，请检查：docker compose ps / docker compose logs wordpress"
 fi
 
 log "===== 恢复流程结束 ====="
+
