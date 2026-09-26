@@ -18,6 +18,7 @@ HEALTH_RETRY=24          # 最多检查 24 次
 HEALTH_INTERVAL=5        # 每次间隔 5 秒 → 最长等 120 秒
 LOG_FILE="$PROJECT_DIR/logs/deploy.log"
 LOCK_FILE="$PROJECT_DIR/logs/deploy.lock"
+LAST_GOOD_FILE="$PROJECT_DIR/logs/last_good_commit"   # 记录最近一次健康成功的版本
 
 mkdir -p "$PROJECT_DIR/logs"
 log() { echo "[$(date '+%F %T')] $*" | tee -a "$LOG_FILE"; }
@@ -154,6 +155,8 @@ done
 # ---------- 9. 成功则结束 ----------
 if [ "$health_ok" -eq 1 ]; then
     log "✅ 部署成功，当前运行版本：$TARGET_COMMIT"
+    # 写入"最近一次健康成功的版本"，作为以后回滚的可靠锚点
+    printf '%s\n' "$TARGET_COMMIT" > "$LAST_GOOD_FILE"
     docker compose --profile monitoring ps --format 'table {{.Name}}\t{{.Status}}' | tee -a "$LOG_FILE"
     log "=================================================="
     exit 0
@@ -161,11 +164,27 @@ fi
 
 # ---------- 10. 失败则自动回滚 ----------
 log "❌ 健康检查未通过，判定部署失败"
-log "===== 开始自动回滚到 $OLD_COMMIT ====="
+
+# 选择回滚目标：优先"最近一次健康成功的版本"
+# 原因：OLD_COMMIT 只是"本次部署开始前"的版本。如果工作区此前已停留在故障版本上，
+# 用它回滚等于原地打转，故障永远无法自愈（这正是之前回滚失效的根因）
+ROLLBACK_COMMIT="$OLD_COMMIT"
+if [ -f "$LAST_GOOD_FILE" ]; then
+    LAST_GOOD=$(tr -d '[:space:]' < "$LAST_GOOD_FILE")
+    if [ -n "$LAST_GOOD" ] && git cat-file -e "${LAST_GOOD}^{commit}" 2>/dev/null; then
+        ROLLBACK_COMMIT="$LAST_GOOD"
+    else
+        log "[WARN] 上次成功版本记录无效（$LAST_GOOD），改用本次部署前版本 $OLD_COMMIT"
+    fi
+else
+    log "[WARN] 暂无上次成功版本记录，改用本次部署前版本 $OLD_COMMIT"
+fi
+
+log "===== 开始自动回滚到 $ROLLBACK_COMMIT ====="
 
 docker compose --profile monitoring logs --tail 50 --no-color >> "$LOG_FILE" 2>&1 || true
 
-git reset --hard "$OLD_COMMIT" >> "$LOG_FILE" 2>&1 || log "[ERROR] 回滚时 git reset 失败！"
+git reset --hard "$ROLLBACK_COMMIT" >> "$LOG_FILE" 2>&1 || log "[ERROR] 回滚时 git reset 失败！"
 
 docker compose --profile monitoring up -d --remove-orphans >> "$LOG_FILE" 2>&1 || true
 
@@ -173,7 +192,7 @@ log "等待服务恢复..."
 sleep 20
 
 if curl -sf -o /dev/null --max-time 10 "$HEALTH_URL"; then
-    log "✅ 回滚成功，服务已恢复到版本 $OLD_COMMIT，站点正常"
+    log "✅ 回滚成功，服务已恢复到版本 $ROLLBACK_COMMIT，站点正常"
     log "=================================================="
     exit 1     # 依然返回失败，让 CI 知道"这次部署没成功"
 else
