@@ -36,7 +36,7 @@ jobs:
           key: ${{ secrets.SSH_KEY }}
           port: ${{ secrets.SSH_PORT }}
           # ★ 校验服务器指纹，防止中间人攻击
-          # fingerprint: ${{ secrets.SSH_FINGERPRINT }}
+          fingerprint: ${{ secrets.SSH_FINGERPRINT }}
           # 脚本里任一命令失败就中断（不静默继续）
           script_stop: true
           # 部署 + 健康检查最长可能 2 分钟，加备份时间，给足 10 分钟
