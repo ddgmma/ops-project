@@ -84,7 +84,7 @@ services:
     container_name: wp_nginx
     restart: unless-stopped
     ports:
-      - "80:80"
+      - "8080:80"
       - "443:443"
     volumes:
       # 只读挂载网站文件：Nginx 只需读，不需要写
