@@ -93,7 +93,7 @@ case "$MODE" in
 
     tar tzf "$BACKUP_FILE" >/dev/null 2>&1 || die "备份文件已损坏，拒绝恢复"
     # tar tzf 要输出几千行，grep -q 一匹配就退出 → tar 收到 SIGPIPE(141) → 管道非 0 → 误报"内容异常"
-    tar tzf "$BACKUP_FILE" | grep 'wp-content' > /dev/null || die "备份内容异常，拒绝恢复"d
+    tar tzf "$BACKUP_FILE" | grep 'wp-content' > /dev/null || die "备份内容异常，拒绝恢复"
 
     log "停止 WordPress 容器"
     docker stop "$WP_CONTAINER" >/dev/null
