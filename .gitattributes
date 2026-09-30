@@ -1,6 +1,178 @@
-*.sh   text eol=lf
-*.yml  text eol=lf
-*.yaml text eol=lf
-*.conf text eol=lf
-*.md   text eol=lf
-*.ini  text eol=lf
+# Git 属性文件：统一换行符与二进制识别，通用模板，可直接复制到任何新项目
+# 优先级：后写的同模式规则覆盖先写的；更具体的模式（如 *.java）优先于 * text=auto
+
+# .gitattributes 只影响之后提交的文件。对已跟踪的旧文件，需在项目里执行一次重写换行符
+# git add --renormalize .
+
+# 文本文件自动规范化：入库统一为 LF；默认检出按平台（Windows 为 CRLF），
+# 下方显式 eol=lf 的规则强制检出也为 LF，保证跨平台一致
+* text=auto
+
+# ---------- 源码与文本文件：统一 LF（避免跨平台 CRLF 冲突） ----------
+# C / C++
+*.c          text eol=lf
+*.cc         text eol=lf
+*.cpp        text eol=lf
+*.cxx        text eol=lf
+*.h          text eol=lf
+*.hpp        text eol=lf
+*.hh         text eol=lf
+# Java / JVM 系
+*.java       text eol=lf
+*.kt         text eol=lf
+*.kts        text eol=lf
+*.scala      text eol=lf
+*.groovy     text eol=lf
+*.gradle     text eol=lf
+# .NET
+*.cs         text eol=lf
+*.csproj     text eol=lf
+*.sln        text eol=lf
+# 脚本与其它语言
+*.py         text eol=lf
+*.go         text eol=lf
+*.rs         text eol=lf
+*.php        text eol=lf
+*.rb         text eol=lf
+*.pl         text eol=lf
+*.lua        text eol=lf
+*.swift      text eol=lf
+# 前端
+*.js         text eol=lf
+*.mjs        text eol=lf
+*.cjs        text eol=lf
+*.jsx        text eol=lf
+*.ts         text eol=lf
+*.tsx        text eol=lf
+*.vue        text eol=lf
+*.svelte     text eol=lf
+*.html       text eol=lf
+*.css        text eol=lf
+*.scss       text eol=lf
+*.sass       text eol=lf
+*.less       text eol=lf
+# 配置 / 数据
+*.json       text eol=lf
+*.json5      text eol=lf
+*.yml        text eol=lf
+*.yaml       text eol=lf
+*.toml       text eol=lf
+*.ini        text eol=lf
+*.cfg        text eol=lf
+*.conf       text eol=lf
+*.properties text eol=lf
+*.xml        text eol=lf
+*.svg        text eol=lf
+*.csv        text eol=lf
+*.tsv        text eol=lf
+*.lock       text eol=lf
+# 文档 / 笔记
+*.md         text eol=lf
+*.txt        text eol=lf
+*.rst        text eol=lf
+*.ipynb      text eol=lf
+# 个人 shell rc / profile：单独声明
+*.bashrc       text eol=lf
+*.bash_profile text eol=lf
+*.bash_aliases text eol=lf
+*.zshrc        text eol=lf
+*.zprofile     text eol=lf
+*.profile      text eol=lf
+# 命令行脚本
+*.sh         text eol=lf
+*.bash       text eol=lf
+*.zsh        text eol=lf
+*.ps1        text eol=lf
+*.psm1       text eol=lf
+*.bat        text eol=crlf
+*.cmd        text eol=crlf
+# Maven Wrapper：无扩展名，需单独指定，避免 Windows 检出变 CRLF 破坏 bash 脚本
+/mvnw        text eol=lf
+# mvnw.cmd 是 Windows 批处理，必须 CRLF
+/mvnw.cmd    text eol=crlf
+*.sql        text eol=lf
+
+# ---------- 常见点文件与构建文件 ----------
+.editorconfig  text eol=lf
+.gitattributes text eol=lf
+.gitignore     text eol=lf
+.gitmodules    text eol=lf
+.env           text eol=lf
+.env.*         text eol=lf
+Dockerfile     text eol=lf
+*.dockerfile   text eol=lf
+Makefile       text eol=lf
+*.mk           text eol=lf
+CMakeLists.txt text eol=lf
+*.cmake        text eol=lf
+
+# ---------- 二进制文件：Git 不做任何转换与差异比较 ----------
+# 图片
+*.png    binary
+*.jpg    binary
+*.jpeg   binary
+*.gif    binary
+*.webp   binary
+*.ico    binary
+*.bmp    binary
+*.tiff   binary
+# 办公文档
+*.pdf    binary
+*.doc    binary
+*.docx   binary
+*.xls    binary
+*.xlsx   binary
+*.ppt    binary
+*.pptx   binary
+# 压缩包 / 归档
+*.zip    binary
+*.rar    binary
+*.7z     binary
+*.tar    binary
+*.gz     binary
+*.bz2    binary
+*.xz     binary
+*.iso    binary
+*.img    binary
+# 可执行 / 库 / 编译产物
+*.exe    binary
+*.msi    binary
+*.dll    binary
+*.so     binary
+*.dylib  binary
+*.a      binary
+*.lib    binary
+*.o      binary
+*.obj    binary
+*.class  binary
+*.jar    binary
+*.war    binary
+*.ear    binary
+*.pyc    binary
+*.pyo    binary
+*.whl    binary
+*.wasm   binary
+# 字体
+*.ttf    binary
+*.otf    binary
+*.woff   binary
+*.woff2  binary
+*.eot    binary
+# 音频
+*.mp3    binary
+*.wav    binary
+*.flac   binary
+*.aac    binary
+*.ogg    binary
+*.m4a    binary
+# 视频
+*.mp4    binary
+*.mkv    binary
+*.avi    binary
+*.mov    binary
+*.webm   binary
+*.wmv    binary
+*.flv    binary
+# 移动端安装包
+*.apk    binary
+*.ipa    binary
