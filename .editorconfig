@@ -1,0 +1,74 @@
+# EditorConfig 配置文件
+# 用于统一不同编辑器/IDE 的代码风格，更多说明见 https://editorconfig.org
+# 通用模板：可直接复制到任何新项目根目录，按项目语言增删对应小节即可
+
+# 停止向上层目录查找配置，此文件为配置根
+root = true
+
+# ---------- 所有文件的通用规则 ----------
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+indent_style = space
+indent_size = 4
+tab_width = 4
+
+# ---------- 各语言专项规则（按需增删） ----------
+
+# 4 空格家族：C / C++ / Java / Python / Rust / C# / Kotlin / Swift 等
+[*.{c,cc,cpp,h,hpp,java,py,rs,cs,kt,kts,scala,swift}]
+indent_style = space
+indent_size = 4
+
+# Java 附加：行宽与 IDEA 专有属性（仅 IntelliJ IDEA 生效，其它编辑器自动忽略）
+[*.java]
+max_line_length = 120
+ij_java_use_tabs = false
+ij_java_indent_size = 4
+ij_java_continuation_indent_size = 8
+
+# 前端生态：JS / TS / Vue / Svelte 业界惯例 2 空格
+[*.{js,mjs,cjs,jsx,ts,tsx,vue,svelte}]
+indent_style = space
+indent_size = 2
+
+# HTML / CSS / 预处理器 2 空格
+[*.{html,css,scss,sass,less}]
+indent_style = space
+indent_size = 2
+
+# Go：官方 gofmt 强制 Tab
+[*.go]
+indent_style = tab
+
+# Makefile：缩进必须是 Tab
+[Makefile]
+indent_style = tab
+
+# YAML / JSON（约定 2 空格，与全局默认不同）
+[*.{yml,yaml,json}]
+indent_style = space
+indent_size = 2
+
+# SQL（约定 2 空格）
+[*.sql]
+indent_style = space
+indent_size = 2
+
+# Shell / PowerShell / Windows 批处理
+[*.{sh,bash,zsh,ps1,psm1,bat,cmd}]
+indent_style = space
+indent_size = 4
+
+# Markdown：保留行尾空格以支持换行语法
+[*.md]
+trim_trailing_whitespace = false
+
+# 二进制 / 媒体文件：不参与任何文本格式处理
+[*.{png,jpg,jpeg,gif,webp,ico,bmp,tiff,pdf,doc,docx,xls,xlsx,ppt,pptx,zip,rar,7z,tar,gz,bz2,xz,class,jar,war,exe,msi,dll,so,dylib,a,lib,o,obj,pyc,pyo,whl,ttf,otf,woff,woff2,eot,wasm,mp3,wav,flac,aac,ogg,mp4,mkv,avi,mov,webm,wmv,iso,apk,ipa}]
+charset = unset
+end_of_line = unset
+insert_final_newline = unset
+trim_trailing_whitespace = unset
