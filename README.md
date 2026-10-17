@@ -2,11 +2,11 @@
 
 一个按生产标准搭建、并持续维护的运维实践项目：在单台云服务器（Ubuntu 24.04）上，用 **Docker Compose** 编排 WordPress 博客（Nginx + PHP-FPM + MySQL），配套完整的 **监控告警**、**备份恢复** 与 **CI/CD 自动部署回滚** 体系。
 
-| 入口 | 地址 |
-| ---- | ---- |
-| 业务站点 | https://blog.ddgmm.top |
+| 入口     | 地址                                                         |
+| -------- | ------------------------------------------------------------ |
+| 业务站点 | https://blog.ddgmm.top                                       |
 | 监控面板 | https://monitor.ddgmm.top（Nginx Basic Auth + Grafana 登录双重保护） |
-| 源码地址 | https://github.com/ddgmma/ops-project |
+| 源码地址 | https://github.com/ddgmma/ops-project                        |
 
 **工程重点**
 
@@ -52,22 +52,22 @@ flowchart TB
 
 ## 技术栈
 
-| 用途 | 镜像 | 版本 |
-| ---- | ---- | ---- |
-| 服务器系统 | Ubuntu | 24.04 LTS |
-| 容器引擎 | Docker CE + Compose v2 | — |
-| Web 入口 / 反向代理 | `nginx:stable` | v1.30.5 |
-| 应用（WordPress） | `wordpress:6-fpm` | PHP 8.3.31 |
-| 数据库 | `mysql:8.0` | v8.0.46 |
-| 主机指标 | `prom/node-exporter` | v1.10.2 |
-| 容器指标 | `ghcr.io/google/cadvisor` | v0.60.5 |
-| 站点拨测 | `prom/blackbox-exporter` | v0.26.0 |
-| 指标存储 / 告警判断 | `prom/prometheus` | v3.5.0 |
-| 告警分发 | `prom/alertmanager` | v0.28.0 |
-| 可视化 | `grafana/grafana` | v12.3.1 |
-| 证书 | certbot + Let's Encrypt | 90 天自动续期 |
-| 备份 | bash + cron + 腾讯云 COS | 每日自动 |
-| 流水线 | GitHub Actions | 自动部署 + 回滚 |
+| 用途                | 镜像                      | 版本            |
+| ------------------- | ------------------------- | --------------- |
+| 服务器系统          | Ubuntu                    | 24.04 LTS       |
+| 容器引擎            | Docker CE + Compose v2    | —               |
+| Web 入口 / 反向代理 | `nginx:stable`            | v1.30.5         |
+| 应用（WordPress）   | `wordpress:6-fpm`         | PHP 8.3.31      |
+| 数据库              | `mysql:8.0`               | v8.0.46         |
+| 主机指标            | `prom/node-exporter`      | v1.10.2         |
+| 容器指标            | `ghcr.io/google/cadvisor` | v0.60.5         |
+| 站点拨测            | `prom/blackbox-exporter`  | v0.26.0         |
+| 指标存储 / 告警判断 | `prom/prometheus`         | v3.5.0          |
+| 告警分发            | `prom/alertmanager`       | v0.28.0         |
+| 可视化              | `grafana/grafana`         | v12.3.1         |
+| 证书                | certbot + Let's Encrypt   | 90 天自动续期   |
+| 备份                | bash + cron + 腾讯云 COS  | 每日自动        |
+| 流水线              | GitHub Actions            | 自动部署 + 回滚 |
 
 ## 目录结构
 
@@ -208,12 +208,12 @@ ssh -N -L 9090:127.0.0.1:9090 user@服务器IP
 
 ### 采集层次
 
-| 层次 | 组件 | 内容 |
-| ---- | ---- | ---- |
-| 主机 | node-exporter | CPU、内存、磁盘、负载、textfile 自定义指标（备份状态） |
-| 容器 | cAdvisor | 每个容器的 CPU / 内存 / 重启次数 |
-| 站点 | blackbox-exporter | 拨测 `https://blog.ddgmm.top` 与 `/wp-login.php`（可用性、响应时间、证书有效期） |
-| 自监控 | Prometheus `up` 指标 | 所有抓取目标是否存活 |
+| 层次   | 组件                 | 内容                                                         |
+| ------ | -------------------- | ------------------------------------------------------------ |
+| 主机   | node-exporter        | CPU、内存、磁盘、负载、textfile 自定义指标（备份状态）       |
+| 容器   | cAdvisor             | 每个容器的 CPU / 内存 / 重启次数                             |
+| 站点   | blackbox-exporter    | 拨测 `https://blog.ddgmm.top` 与 `/wp-login.php`（可用性、响应时间、证书有效期） |
+| 自监控 | Prometheus `up` 指标 | 所有抓取目标是否存活                                         |
 
 Grafana 侧导入社区面板：Node Exporter Full（1860）、Docker 容器监控（193）与 Blackbox 拨测面板。
 
@@ -236,9 +236,9 @@ Grafana 侧导入社区面板：Node Exporter Full（1860）、Docker 容器监�
 
 ### 备份设计
 
-| 内容 | 脚本 | 关键点 |
-| ---- | ---- | ------ |
-| MySQL 数据库 | `backup_mysql.sh` | `mysqldump --single-transaction`；`set -o pipefail` 避免「管道最后一环 gzip 成功 → 误报备份成功」；校验 gzip 完整性、文件大小、`Dump completed` 结束标记 |
+| 内容           | 脚本              | 关键点                                                       |
+| -------------- | ----------------- | ------------------------------------------------------------ |
+| MySQL 数据库   | `backup_mysql.sh` | `mysqldump --single-transaction`；`set -o pipefail` 避免「管道最后一环 gzip 成功 → 误报备份成功」；校验 gzip 完整性、文件大小、`Dump completed` 结束标记 |
 | wp_data 文件卷 | `backup_files.sh` | 临时 alpine 容器**只读**挂载卷打包；校验 tar 完整性、文件大小、包内含 `wp-content` |
 
 两者共同特性：
