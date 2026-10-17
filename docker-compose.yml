@@ -21,9 +21,8 @@ services:
       - db_data:/var/lib/mysql
     healthcheck:
       # 用 mysql 客户端真连一次库，比 mysqladmin ping 可靠（见下方说明）
-      test:
-        - CMD-SHELL
-        - mysql -h 127.0.0.1 -u root -p"$$MYSQL_ROOT_PASSWORD" -e "SELECT 1" >/dev/null 2>&1
+      # 字符串形式 = 隐式 CMD-SHELL（容器内 /bin/sh -c 执行），不要单独写一行 - CMD-SHELL
+      test: 'mysql -h 127.0.0.1 -u root -p"$$MYSQL_ROOT_PASSWORD" -e "SELECT 1" >/dev/null 2>&1'
       interval: 10s
       timeout: 5s
       retries: 6
@@ -62,9 +61,8 @@ services:
       # php.ini 配置文件挂载到容器里，覆盖默认配置，便于修改上传文件大小
       - ./php.ini:/usr/local/etc/php/conf.d/uploads.ini
     healthcheck:
-      test:
-        - CMD-SHELL
-        - "php -r 'exit(@fsockopen(\"127.0.0.1\", 9000) ? 0 : 1);'"
+      # 字符串形式 = 隐式 CMD-SHELL：用 PHP 探测本机 9000 端口是否在监听
+      test: "php -r 'exit(@fsockopen(\"127.0.0.1\", 9000) ? 0 : 1);'"
       interval: 30s
       timeout: 5s
       retries: 3
@@ -94,8 +92,7 @@ services:
       - ./nginx/.htpasswd:/etc/nginx/.htpasswd:ro
       # Let's Encrypt 验证目录（宿主机 certbot 写，容器读）
       - ./certbot/www:/var/www/certbot:ro
-      # 证书目录（宿主机 certbot 写，容器读）
-            # 改成宿主机真实证书目录：certbot 续期后容器直接看到新证书，不用复制
+      # 证书目录（宿主机 certbot 写，容器读），改成宿主机真实证书目录：certbot 续期后容器直接看到新证书，不用复制
       - /etc/letsencrypt:/etc/letsencrypt:ro
       # 日志挂到宿主机，方便排查和做日志轮转
       - ./logs/nginx:/var/log/nginx
@@ -129,14 +126,14 @@ services:
       - --path.rootfs=/rootfs
       # 排除掉容器自己的 overlay、tmpfs 等文件系统，否则磁盘用量会看起来很奇怪
       - --collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc|var/lib/docker/.+)($$|/)
-            # ★ 新增：读取自定义指标目录
+      # 新增：读取自定义指标目录
       - --collector.textfile.directory=/var/lib/node_exporter/textfile
     volumes:
       # 宿主机的 /proc、/sys、/ 以只读方式挂进来，node-exporter 靠读这些文件获取主机信息
       - /proc:/host/proc:ro
       - /sys:/host/sys:ro
       - /:/rootfs:ro
-            # ★ 新增：把备份脚本写的指标目录挂进来
+      # 新增：把备份脚本写的指标目录挂进来
       - /var/lib/node_exporter/textfile:/var/lib/node_exporter/textfile:ro
     networks:
       - ops-net
