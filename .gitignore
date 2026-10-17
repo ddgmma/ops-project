@@ -23,3 +23,13 @@ alertmanager/alertmanager.yml
 
 # monitor.ddgmm.top 访问密码
 nginx/.htpasswd
+
+# ============ IDE / 编辑器 ============
+.idea/
+*.iml
+.vscode/
+.vscode.bak/
+.vscode-test/
+.history/
+.reasonix/
+.workbuddy
