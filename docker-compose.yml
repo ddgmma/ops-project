@@ -1,5 +1,5 @@
 # 本项目所有服务（应用 + 监控）都在这一个文件里
-# 监控服务用 profiles 控制，默认不启动，第 3 章会讲
+# 监控服务用 profiles 控制
 
 services:
   # ==================== 数据库 ====================
@@ -20,7 +20,7 @@ services:
     volumes:
       - db_data:/var/lib/mysql
     healthcheck:
-      # 用 mysql 客户端真连一次库，比 mysqladmin ping 可靠（见下方说明）
+      # 用 mysql 客户端真连一次库，比 mysqladmin ping 可靠
       # 字符串形式 = 隐式 CMD-SHELL（容器内 /bin/sh -c 执行），不要单独写一行 - CMD-SHELL
       test: 'mysql -h 127.0.0.1 -u root -p"$$MYSQL_ROOT_PASSWORD" -e "SELECT 1" >/dev/null 2>&1'
       interval: 10s
@@ -146,7 +146,7 @@ services:
 
   # ---------- 容器指标 ----------
   cadvisor:
-    # ⚠️ 注意镜像地址：不要用网上的 google/cadvisor:latest（见下方说明）
+    # 注意镜像地址：不要用网上的 google/cadvisor:latest（见下方说明）
     image: ghcr.io/google/cadvisor:v0.60.5
     container_name: cadvisor
     restart: unless-stopped
@@ -227,10 +227,10 @@ services:
     restart: unless-stopped
     profiles: ["monitoring"]
     volumes:
-      # ⚠️ 这个文件里有邮箱授权码，已加入 .gitignore，不进 Git
+      # 邮箱授权码，已加入 .gitignore
       - ./alertmanager/alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
       - alertmanager_data:/alertmanager
-    # ⚠️ 这里不要传 SMTP_FROM / SMTP_AUTH_PASSWORD 之类的变量：
+    # 这里不要传 SMTP_FROM / SMTP_AUTH_PASSWORD 之类的变量：
     #    Alertmanager 不会展开配置文件里的 ${VAR}（它只做 YAML 解析 + Go 模板渲染），
     #    传进来也没人读，反而会让人误以为"改了 .env 就生效"。
     #    SMTP 账号/授权码请直接写在 alertmanager/alertmanager.yml 里（该文件已 gitignore）。
